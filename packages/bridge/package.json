@@ -1,0 +1,14 @@
+{
+    "name": "mcp-bridge",
+    "version": "1.0.0",
+    "description": "Foundry VTT Bridge Module for MCP",
+    "scripts": {
+        "build": "tsc",
+        "package:vtt": "npm run build && node -e \"const fs = require('fs'); const archiver = require('archiver'); const output = fs.createWriteStream('module.zip'); const archive = archiver('zip', { zlib: { level: 9 } }); archive.pipe(output); archive.file('module.json', { name: 'module.json' }); archive.directory('dist/', 'dist'); archive.finalize();\""
+    },
+    "devDependencies": {
+        "@league-of-foundry-developers/foundry-vtt-types": "^13.346.0-beta.2025081219",
+        "archiver": "^7.0.1",
+        "typescript": "^5.9.3"
+    }
+}

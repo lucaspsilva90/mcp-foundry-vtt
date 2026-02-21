@@ -1,0 +1,11 @@
+{
+  "name": "mcp-foundry-vtt-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "start": "npm start --workspace=mcp-foundry-vtt"
+  }
+}
