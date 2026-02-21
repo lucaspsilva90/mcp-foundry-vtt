@@ -19,7 +19,16 @@ async function main() {
     await server.connect(transport);
 }
 
+// Graceful shutdown handling
+const cleanup = () => {
+    foundryClient.stopServer();
+    process.exit(0);
+};
+
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
+
 main().catch((error) => {
-    console.error("Server error:", error);
+    cleanup();
     process.exit(1);
 });

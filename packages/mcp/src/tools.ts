@@ -24,7 +24,11 @@ export function registerTools(server: McpServer) {
             name: z.string().describe('The name of the actor'),
             type: z.string().describe('The type of actor (e.g., character, npc)'),
             img: z.string().optional().describe('Image path for the actor avatar'),
-            system: z.any().optional().describe('System-specific data structure (e.g. abilities, attributes)')
+            system: z.any().optional().describe('System-specific data structure (e.g. abilities, attributes)'),
+            baseActorId: z.string().optional().describe('ID of an existing actor to use as a template'),
+            baseActorName: z.string().optional().describe('Name of an existing actor to use as a template'),
+            folder: z.string().optional().describe('Folder ID to place the new actor in'),
+            items: z.array(z.any()).optional().describe('Array of items (spells, class, background, weapons) to include at creation')
         }
     }, async (params) => {
         try {
@@ -37,7 +41,8 @@ export function registerTools(server: McpServer) {
         description: 'Edit an existing Actor in Foundry VTT',
         inputSchema: {
             id: z.string().describe('The ID of the actor to edit'),
-            updateData: z.any().describe('The data changes to apply (e.g. { "name": "New Name", "system.attributes.hp.value": 10 })')
+            updateData: z.any().describe('The data changes to apply (e.g. { "name": "New Name", "system.attributes.hp.value": 10 })'),
+            itemsToAdd: z.array(z.any()).optional().describe('Array of items to add to the existing actor')
         }
     }, async (params) => {
         try {
@@ -48,9 +53,10 @@ export function registerTools(server: McpServer) {
 
     // ---- COMPENDIUMS ----
     server.registerTool('read_compendiums', {
-        description: 'Read documents from a Compendium pack',
+        description: 'Read documents from a Compendium pack. If you are looking for a specific item/actor (e.g. "Commoner"), DO NOT DO A FULL DUMP. ALWAYS provide a "name" to search the index first, get the ID, and then query again using the "id".',
         inputSchema: {
             pack: z.string().describe('The exact name of the pack (e.g., dnd5e.monsters)'),
+            name: z.string().optional().describe('Filter the compendium index by name (partial match). Always use this first before querying by ID.'),
             id: z.string().optional().describe('The ID of a specific document inside the compendium')
         }
     }, async (params) => {

@@ -9,10 +9,7 @@ export class FoundryClient {
     public startServer(port: number = 33333) {
         this.wss = new WebSocketServer({ port });
 
-        console.log(`MCP Foundry Server | Listening for Bridge connections on ws://localhost:${port}`);
-
         this.wss.on('connection', (ws) => {
-            console.log('MCP Foundry Server | Bridge connected.');
             this.activeSocket = ws;
 
             ws.on('message', (message: string) => {
@@ -20,12 +17,24 @@ export class FoundryClient {
             });
 
             ws.on('close', () => {
-                console.log('MCP Foundry Server | Bridge disconnected.');
                 if (this.activeSocket === ws) {
                     this.activeSocket = null;
                 }
             });
         });
+    }
+
+    public stopServer() {
+        if (this.wss) {
+            console.log('MCP Foundry Server | Shutting down WebSocket server...');
+            for (const client of this.wss.clients) {
+                client.terminate();
+            }
+            this.wss.close();
+            this.wss = null;
+            this.activeSocket = null;
+            console.log('MCP Foundry Server | WebSocket server closed.');
+        }
     }
 
     private handleMessage(message: string) {
