@@ -36,7 +36,10 @@ export const ActorHandlers = {
 
         let baseData: any = {};
         if (params.baseActorId || params.baseActorName) {
-            let baseActor = params.baseActorId ? game.actors?.get(params.baseActorId) : undefined;
+            let baseActor: any = params.baseActorId ? game.actors?.get(params.baseActorId) : undefined;
+            if (!baseActor && params.baseActorId && params.baseActorId.startsWith("Compendium.")) {
+                baseActor = await (globalThis as any).fromUuid(params.baseActorId);
+            }
             if (!baseActor && params.baseActorName) {
                 baseActor = game.actors?.contents.find(a => a.name?.toLowerCase() === params.baseActorName!.toLowerCase());
             }
