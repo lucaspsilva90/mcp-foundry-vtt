@@ -17,7 +17,6 @@ export const NoteHandlers = {
     create: async (params: { name: string; content?: string; folder?: string }) => {
         if (!game.user?.isGM) throw new Error("Only GM can create journals via Bridge.");
 
-        // In Foundry VTT v10+, Journals have JournalEntryPages.
         const noteData: any = {
             name: params.name,
             folder: params.folder
@@ -42,12 +41,10 @@ export const NoteHandlers = {
         const note = game.journal?.get(params.id);
         if (!note) throw new Error(`JournalEntry with ID ${params.id} not found.`);
 
-        // Update the journal itself
         if (params.updateData && Object.keys(params.updateData).length > 0) {
             await note.update(params.updateData);
         }
 
-        // Update specific page if defined
         if (params.pageId && params.pageUpdateData) {
             const page = note.pages.get(params.pageId);
             if (page) {
