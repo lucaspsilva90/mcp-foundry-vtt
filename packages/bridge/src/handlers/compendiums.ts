@@ -1,5 +1,5 @@
 export const CompendiumHandlers = {
-    read: async (params: { pack: string; id?: string; name?: string }) => {
+    read: async (params: { pack: string; id?: string; name?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
 
@@ -9,13 +9,18 @@ export const CompendiumHandlers = {
             return doc.toObject();
         }
 
-        let index = await pack.getIndex();
+        const isMinimal = params.fields !== "full";
+        let index = await pack.getIndex(isMinimal ? { fields: ["name", "type"] } : undefined);
 
         if (params.name) {
             index = index.filter((entry: any) => entry.name?.toLowerCase().includes(params.name!.toLowerCase()));
         }
 
-        return index;
+        // Apply pagination
+        let results = Array.from(index);
+        const offset = params.offset || 0;
+        const limit = params.limit || results.length;
+        return results.slice(offset, offset + limit);
     },
 
     create: async (params: { pack: string; documentData: any }) => {

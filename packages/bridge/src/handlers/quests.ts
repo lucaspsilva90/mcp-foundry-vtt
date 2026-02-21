@@ -4,7 +4,7 @@ const QUEST_FLAG_KEY = "isQuest";
 const QUEST_STATUS_KEY = "questStatus";
 
 export const QuestHandlers = {
-    read: async (params: { id?: string; status?: string }) => {
+    read: async (params: { id?: string; status?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         if (params.id) {
             const note = game.journal?.get(params.id);
             if (!note) throw new Error(`Quest (JournalEntry) with ID ${params.id} not found.`);
@@ -18,7 +18,17 @@ export const QuestHandlers = {
             quests = quests.filter(q => q.getFlag(QUEST_FLAG_SCOPE, QUEST_STATUS_KEY) === params.status);
         }
 
-        return quests.map(q => q.toObject());
+        const isMinimal = params.fields !== "full";
+        const offset = params.offset || 0;
+        const limit = params.limit || quests.length;
+
+        let pagedQuests = quests.slice(offset, offset + limit);
+
+        if (isMinimal) {
+            return pagedQuests.map(q => ({ _id: q.id, name: q.name, status: q.getFlag(QUEST_FLAG_SCOPE, QUEST_STATUS_KEY) }));
+        }
+
+        return pagedQuests.map(q => q.toObject());
     },
 
     create: async (params: { name: string; description: string; status?: string }) => {

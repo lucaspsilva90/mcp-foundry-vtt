@@ -1,5 +1,5 @@
 export const SceneHandlers = {
-    read: async (params: { id?: string; name?: string }) => {
+    read: async (params: { id?: string; name?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         if (params.id) {
             const scene = game.scenes?.get(params.id);
             if (!scene) throw new Error(`Scene with ID ${params.id} not found.`);
@@ -11,7 +11,17 @@ export const SceneHandlers = {
             scenes = scenes.filter(s => s.name?.toLowerCase().includes(params.name!.toLowerCase()));
         }
 
-        return scenes.map(s => s.toObject());
+        const isMinimal = params.fields !== "full";
+        const offset = params.offset || 0;
+        const limit = params.limit || scenes.length;
+
+        let pagedScenes = scenes.slice(offset, offset + limit);
+
+        if (isMinimal) {
+            return pagedScenes.map(s => ({ _id: s.id, name: s.name }));
+        }
+
+        return pagedScenes.map(s => s.toObject());
     },
 
     create: async (params: { name: string; background: string; width?: number; height?: number }) => {

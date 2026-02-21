@@ -1,5 +1,5 @@
 export const NoteHandlers = {
-    read: async (params: { id?: string; name?: string }) => {
+    read: async (params: { id?: string; name?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         if (params.id) {
             const note = game.journal?.get(params.id);
             if (!note) throw new Error(`JournalEntry with ID ${params.id} not found.`);
@@ -11,7 +11,17 @@ export const NoteHandlers = {
             notes = notes.filter(n => n.name?.toLowerCase().includes(params.name!.toLowerCase()));
         }
 
-        return notes.map(n => n.toObject());
+        const isMinimal = params.fields !== "full";
+        const offset = params.offset || 0;
+        const limit = params.limit || notes.length;
+
+        let pagedNotes = notes.slice(offset, offset + limit);
+
+        if (isMinimal) {
+            return pagedNotes.map(n => ({ _id: n.id, name: n.name }));
+        }
+
+        return pagedNotes.map(n => n.toObject());
     },
 
     create: async (params: { name: string; content?: string; folder?: string }) => {

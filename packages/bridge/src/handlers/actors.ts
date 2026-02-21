@@ -1,7 +1,7 @@
 // Types for Foundry VTT globals (partially declared by foundry-vtt-types)
 
 export const ActorHandlers = {
-    read: async (params: { id?: string; name?: string; type?: string }) => {
+    read: async (params: { id?: string; name?: string; type?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         if (params.id) {
             const actor = game.actors?.get(params.id);
             if (!actor) throw new Error(`Actor with ID ${params.id} not found.`);
@@ -17,7 +17,17 @@ export const ActorHandlers = {
             actors = actors.filter(a => a.name?.toLowerCase().includes(params.name!.toLowerCase()));
         }
 
-        return actors.map(a => a.toObject());
+        const isMinimal = params.fields !== "full";
+        const offset = params.offset || 0;
+        const limit = params.limit || actors.length;
+
+        let pagedActors = actors.slice(offset, offset + limit);
+
+        if (isMinimal) {
+            return pagedActors.map(a => ({ _id: a.id, name: a.name, type: a.type }));
+        }
+
+        return pagedActors.map(a => a.toObject());
     },
 
     create: async (params: { name: string; type: string; system?: any; img?: string; baseActorId?: string; baseActorName?: string; folder?: string; items?: any[] }) => {
