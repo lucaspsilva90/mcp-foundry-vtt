@@ -329,4 +329,50 @@ export function registerTools(server: McpServer) {
             return { content: [{ type: 'text', text: `Success: ${JSON.stringify(result)}` }] };
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
+
+    // ---- TABLES ----
+    server.registerTool('read_tables', {
+        description: 'Read RollTables from Foundry VTT. Use pagination and minimal fields to avoid huge payloads.',
+        inputSchema: {
+            id: z.string().optional().describe('The ID of a specific table'),
+            name: z.string().optional().describe('Filter by table name (partial match)'),
+            fields: z.enum(["minimal", "full"]).optional().describe('If "minimal" (default), returns only _id, name, and formula. "full" returns all data including results.'),
+            limit: z.number().optional().describe('Maximum number of items to return (default: all)'),
+            offset: z.number().optional().describe('Number of items to skip for pagination (default: 0)')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('table.read', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
+    server.registerTool('create_table', {
+        description: 'Create a new RollTable in Foundry VTT',
+        inputSchema: {
+            name: z.string().describe('The name of the table'),
+            description: z.string().optional().describe('Description of the table'),
+            formula: z.string().optional().describe('The roll formula (e.g. 1d20)'),
+            results: z.array(z.any()).optional().describe('Array of result objects { type: 1|2|3, text: string, weight: number, range: [min,max], drawn: boolean }'),
+            folder: z.string().optional().describe('Folder ID to place the table in')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('table.create', params);
+            return { content: [{ type: 'text', text: `Success: ${JSON.stringify(result)}` }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
+    server.registerTool('edit_table', {
+        description: 'Edit an existing RollTable in Foundry VTT',
+        inputSchema: {
+            id: z.string().describe('The ID of the table to edit'),
+            updateData: z.any().describe('Data changes for the table (e.g. { name: "New Title", formula: "1d100" })')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('table.edit', params);
+            return { content: [{ type: 'text', text: `Success: ${JSON.stringify(result)}` }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
 }

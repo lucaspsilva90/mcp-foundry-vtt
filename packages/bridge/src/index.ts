@@ -6,6 +6,7 @@ import { SceneHandlers } from "./handlers/scenes.js";
 import { QuestHandlers } from "./handlers/quests.js";
 import { ItemHandlers } from "./handlers/items.js";
 import { FolderHandlers } from "./handlers/folders.js";
+import { TableHandlers } from "./handlers/tables.js";
 
 Hooks.once('init', () => {
     console.log('MCP Bridge | Initializing MCP Bridge module');
@@ -55,6 +56,10 @@ Hooks.once('ready', () => {
     socket.registerHandler('folder.read', FolderHandlers.read);
     socket.registerHandler('folder.create', FolderHandlers.create);
     socket.registerHandler('folder.edit', FolderHandlers.edit);
+
+    socket.registerHandler('table.read', TableHandlers.read);
+    socket.registerHandler('table.create', TableHandlers.create);
+    socket.registerHandler('table.edit', TableHandlers.edit);
 
     // Start connecting to the MCP Server
     socket.connect();
