@@ -72,6 +72,21 @@ export function registerTools(server: McpServer) {
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
 
+    server.registerTool('search_compendiums', {
+        description: 'Search for documents across all compendium packs. Automatically prioritizes premium modules, and user-made world compendiums over standard system compendiums (e.g. SRD).',
+        inputSchema: {
+            name: z.string().describe('The name of the document to search for (partial match by default)'),
+            type: z.string().optional().describe('Optional document type to filter by (e.g., Actor, Item, JournalEntry)'),
+            exactMatch: z.boolean().optional().describe('If true, only returns documents that match the name exactly (case-insensitive)'),
+            limit: z.number().optional().describe('Maximum number of results to return (default: 5)')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('compendium.search', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     server.registerTool('create_compendium_entry', {
         description: 'Create a document directly in a Compendium',
         inputSchema: {

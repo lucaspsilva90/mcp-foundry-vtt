@@ -23,6 +23,97 @@ export const CompendiumHandlers = {
         return results.slice(offset, offset + limit);
     },
 
+    search: async (params: { name: string; type?: string; exactMatch?: boolean; limit?: number }) => {
+        const queryName = params.name.toLowerCase();
+        const limit = params.limit || 5;
+
+        let allMatches: any[] = [];
+
+        for (const pack of game.packs.values()) {
+            if (params.type && pack.metadata.type !== params.type) continue;
+
+            // pack.index may not be fully loaded, getIndex fetches it.
+            // Using minimal fields to save memory, we'll fetch full doc for final results.
+            const index = await pack.getIndex({ fields: ["name", "type"] });
+
+            for (const entry of index) {
+                const entryName = (entry.name || "").toLowerCase();
+                let isMatch = false;
+                let isExact = false;
+
+                if (params.exactMatch) {
+                    if (entryName === queryName) {
+                        isMatch = true;
+                        isExact = true;
+                    }
+                } else {
+                    if (entryName.includes(queryName)) {
+                        isMatch = true;
+                        if (entryName === queryName) {
+                            isExact = true;
+                        }
+                    }
+                }
+
+                if (isMatch) {
+                    allMatches.push({
+                        packId: pack.metadata.id,
+                        packType: pack.metadata.packageType,
+                        entryId: entry._id,
+                        name: entry.name,
+                        type: entry.type,
+                        isExact: isExact
+                    });
+                }
+            }
+        }
+
+        // Sort priority:
+        // 1. Exact match over partial match
+        // 2. Multi-tier Package Type fallback: world > module > system (to prioritize premium/user content over SRD)
+        allMatches.sort((a, b) => {
+            if (a.isExact !== b.isExact) {
+                return a.isExact ? -1 : 1;
+            }
+
+            type PackPriorityType = 'world' | 'module' | 'system' | 'core';
+            const packPriority: Record<PackPriorityType, number> = {
+                world: 0,
+                module: 1,
+                system: 2,
+                core: 3
+            };
+
+            const aPriority = packPriority[a.packType as PackPriorityType] ?? 99;
+            const bPriority = packPriority[b.packType as PackPriorityType] ?? 99;
+
+            return aPriority - bPriority;
+        });
+
+        const topMatches = allMatches.slice(0, limit);
+
+        // Fetch full document data for the top matches
+        const finalResults = [];
+        for (const match of topMatches) {
+            const pack = game.packs.get(match.packId);
+            if (pack) {
+                const doc = await pack.getDocument(match.entryId);
+                if (doc) {
+                    finalResults.push({
+                        packInfo: {
+                            id: pack.metadata.id,
+                            label: pack.metadata.label,
+                            packageType: pack.metadata.packageType
+                        },
+                        document: doc.toObject()
+                    });
+                }
+            }
+        }
+
+        return finalResults;
+    },
+
     create: async (params: { pack: string; documentData: any }) => {
         if (!game.user?.isGM) throw new Error("Only GM can modify compendiums via Bridge.");
 

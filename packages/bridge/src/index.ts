@@ -34,6 +34,7 @@ Hooks.once('ready', () => {
     socket.registerHandler('actor.edit', ActorHandlers.edit);
 
     socket.registerHandler('compendium.read', CompendiumHandlers.read);
+    socket.registerHandler('compendium.search', CompendiumHandlers.search);
     socket.registerHandler('compendium.create', CompendiumHandlers.create);
     socket.registerHandler('compendium.edit', CompendiumHandlers.edit);
 
