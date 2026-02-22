@@ -188,6 +188,51 @@ export const ActorHandlers = {
         return [];
     },
 
+    deleteItems: async (params: { actorId: string; itemIds: string[] }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can edit actors via Bridge.");
+        const actor = game.actors?.get(params.actorId);
+        if (!actor) {
+            throw new Error(`Ator com ID ${params.actorId} não encontrado.`);
+        }
+
+        if (params.itemIds && params.itemIds.length > 0) {
+            const deleted = await actor.deleteEmbeddedDocuments("Item", params.itemIds);
+            return { success: true, message: `${deleted.length} item(s) deletado(s) com sucesso.` };
+        }
+
+        return { success: false, message: "Nenhum ID de item fornecido." };
+    },
+
+    editItem: async (params: { actorId: string; itemId: string; updateData: any }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can edit actors via Bridge.");
+        const actor = game.actors?.get(params.actorId);
+        if (!actor) throw new Error(`Actor with ID ${params.actorId} not found.`);
+
+        const item = actor.items.get(params.itemId);
+        if (!item) throw new Error(`Item with ID ${params.itemId} not found in Actor ${params.actorId}.`);
+
+        const sanitizeData = (data: any) => {
+            const sanitized: any = {};
+            for (const [key, value] of Object.entries(data)) {
+                if (typeof key === 'string' && (key.startsWith("system_") || key.startsWith("flags_"))) {
+                    sanitized[key.replace(/_/g, '.')] = value;
+                } else {
+                    sanitized[key] = value;
+                }
+            }
+            return sanitized;
+        };
+
+        const sanitizedUpdateData = params.updateData ? sanitizeData(params.updateData) : {};
+        const flattenFn = (globalThis as any).foundry?.utils?.flattenObject || (globalThis as any).flattenObject;
+        const flatUpdateData = flattenFn ? flattenFn(sanitizedUpdateData) : sanitizedUpdateData;
+
+        const updatedItem = await item.update(flatUpdateData);
+        if (!updatedItem) throw new Error("Failed to update item.");
+
+        return updatedItem.toObject();
+    },
+
     create5eAttack: async (params: { actorId: string; name: string; actionType: string; damageDices?: string; damageType?: string; saveAbility?: string; saveDc?: number; ability?: string }) => {
         if (!game.user?.isGM) throw new Error("Only GM can edit actors via Bridge.");
         const actor = game.actors?.get(params.actorId);

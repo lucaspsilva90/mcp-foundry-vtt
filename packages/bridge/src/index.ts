@@ -34,6 +34,8 @@ Hooks.once('ready', () => {
     socket.registerHandler('actor.edit', ActorHandlers.edit);
     socket.registerHandler('actor.clone', ActorHandlers.clone);
     socket.registerHandler('actor.add_items', ActorHandlers.addItems);
+    socket.registerHandler('actor.delete_items', ActorHandlers.deleteItems);
+    socket.registerHandler('actor.edit_item', ActorHandlers.editItem);
     socket.registerHandler('actor.create_5e_attack', ActorHandlers.create5eAttack);
     socket.registerHandler('actor.create_5e_spell', ActorHandlers.create5eSpell);
     socket.registerHandler('actor.update_stats', ActorHandlers.updateStats);

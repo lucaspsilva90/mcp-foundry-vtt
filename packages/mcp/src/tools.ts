@@ -67,6 +67,33 @@ export function registerTools(server: McpServer) {
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
 
+    server.registerTool('delete_items_from_actor', {
+        description: 'Deletar um ou mais Itens (Armas, Magias, Habilidades, etc.) que estão embutidos (embedded) dentro da ficha de um Ator (Actor) específico no Foundry VTT. Ideal para limpar fichas após o "cloning" ou remover habilidades geradas temporariamente.',
+        inputSchema: {
+            actorId: z.string().describe('O ID do Ator (Actor) de onde os itens serão deletados.'),
+            itemIds: z.array(z.string()).describe('Um array de IDs (strings) representando os Itens que devem ser deletados de dentro do Ator.')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('actor.delete_items', params);
+            return { content: [{ type: 'text', text: `Success: Deleted items from actor. \n${JSON.stringify(result)}` }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
+    server.registerTool('edit_item_in_actor', {
+        description: 'Edit an Item that is embedded inside an Actor. Useful for renaming an existing weapon, changing its damage, or adding flavor without recreating it from scratch.',
+        inputSchema: {
+            actorId: z.string().describe('The ID of the Actor that owns the item'),
+            itemId: z.string().describe('The ID of the embedded Item to edit'),
+            updateData: z.any().describe('The data changes to apply to the item (e.g. { "name": "Pancada de Raízes", "system.description.value": "Nova descrição" })')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('actor.edit_item', params);
+            return { content: [{ type: 'text', text: `Success: Edited item in actor. \n${JSON.stringify(result)}` }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     server.registerTool('create_5e_attack', {
         description: 'Create an attack or save ability for D&D 5e (v3+), abstracting away the complex system.activities data structure.',
         inputSchema: {
