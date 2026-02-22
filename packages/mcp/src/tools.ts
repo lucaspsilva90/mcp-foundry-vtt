@@ -185,7 +185,7 @@ export function registerTools(server: McpServer) {
     });
 
     server.registerTool('update_actor_stats', {
-        description: 'Shorthand tool to safely update an actors core numeric stats (abilities, skills, saves, ac, cr). Use this over edit_actor to avoid nested system path errors.',
+        description: 'Shorthand tool to safely update an actors core numeric stats (abilities, skills, saves, ac, cr, movement, size, traits). Use this over edit_actor to avoid nested system path errors.',
         inputSchema: {
             actorId: z.string().describe('The ID of the actor to update'),
             abilities: z.any().optional().describe('Object with ability scores to set (e.g. {"str": 18, "dex": 14})'),
@@ -193,7 +193,13 @@ export function registerTools(server: McpServer) {
             skills: z.array(z.string()).optional().describe('Array of skill abbreviations the actor is proficient in (e.g. ["prc", "ste", "ath"])'),
             cr: z.number().optional().describe('Challenge Rating (for NPCs)'),
             alignment: z.string().optional().describe('Alignment string (e.g. "Chaotic Evil")'),
-            ac: z.number().optional().describe('Armor Class (flat override)')
+            ac: z.number().optional().describe('Armor Class (flat override)'),
+            movementWalk: z.number().optional().describe('Movement speed in ft'),
+            size: z.string().optional().describe('Size (tiny, sm, med, lg, huge, grg)'),
+            damageVulnerabilities: z.array(z.string()).optional().describe('Array of damage types (e.g. ["fire"])'),
+            damageResistances: z.array(z.string()).optional().describe('Array of damage types'),
+            damageImmunities: z.array(z.string()).optional().describe('Array of damage types'),
+            conditionImmunities: z.array(z.string()).optional().describe('Array of conditions (e.g. ["poisoned", "prone"])')
         }
     }, async (params) => {
         try {

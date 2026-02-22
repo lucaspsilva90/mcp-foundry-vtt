@@ -90,7 +90,23 @@ export const ActorHandlers = {
         const actor = game.actors?.get(params.id);
         if (!actor) throw new Error(`Actor with ID ${params.id} not found.`);
 
-        const updatedActor = await actor.update(params.updateData);
+        // Sanitize LLM potential underscore notation
+        const sanitizedUpdateData: any = {};
+        if (params.updateData) {
+            for (const [key, value] of Object.entries(params.updateData)) {
+                if (typeof key === 'string' && (key.startsWith("system_") || key.startsWith("flags_"))) {
+                    sanitizedUpdateData[key.replace(/_/g, '.')] = value;
+                } else {
+                    sanitizedUpdateData[key] = value;
+                }
+            }
+        }
+
+        // Deep flatten to avoid structure wipeouts in nested updates
+        const flattenFn = (globalThis as any).foundry?.utils?.flattenObject || (globalThis as any).flattenObject;
+        const flatUpdateData = flattenFn ? flattenFn(sanitizedUpdateData) : sanitizedUpdateData;
+
+        const updatedActor = await actor.update(flatUpdateData);
         if (!updatedActor) throw new Error("Failed to update actor.");
 
         if (params.itemsToAdd && Array.isArray(params.itemsToAdd) && params.itemsToAdd.length > 0) {
@@ -122,7 +138,28 @@ export const ActorHandlers = {
             Object.assign(updateData, params.attributes);
         }
 
-        const clonedActor = await baseActor.clone(updateData, { save: true });
+        // Extract base object to sever ties with the actual compendium instance
+        let actorData = baseActor.toObject();
+
+        // 1. Strip compendium and identity metadata so it doesn't get rejected or locked
+        delete actorData._id;
+        delete actorData.folder;
+        delete actorData.ownership;
+        if (actorData.flags?.core?.sourceId) delete actorData.flags.core.sourceId;
+
+        // 2. Expand our flat updateData into an object and merge it
+        const expandFn = (globalThis as any).foundry?.utils?.expandObject || (globalThis as any).expandObject;
+        const expandedUpdate = expandFn ? expandFn(updateData) : updateData;
+
+        const mergeFn = (globalThis as any).foundry?.utils?.mergeObject || (globalThis as any).mergeObject;
+        const finalData = mergeFn
+            ? mergeFn(actorData, expandedUpdate, { inplace: false, insertKeys: true, insertValues: true })
+            : Object.assign(actorData, expandedUpdate);
+
+        // 3. Force creation in the exact world context, bypassing restricted pack logic
+        const clonedActor = await Actor.create(finalData);
+        if (!clonedActor) throw new Error("Failed to clone actor.");
+
         return clonedActor.toObject();
     },
 
@@ -300,7 +337,7 @@ export const ActorHandlers = {
         return added.map((i: any) => i.toObject());
     },
 
-    updateStats: async (params: { actorId: string; abilities?: any; savingThrows?: string[]; skills?: string[]; cr?: number; alignment?: string; ac?: number }) => {
+    updateStats: async (params: { actorId: string; abilities?: any; savingThrows?: string[]; skills?: string[]; cr?: number; alignment?: string; ac?: number; movementWalk?: number; size?: string; damageVulnerabilities?: string[]; damageResistances?: string[]; damageImmunities?: string[]; conditionImmunities?: string[] }) => {
         if (!game.user?.isGM) throw new Error("Only GM can edit actors via Bridge.");
         const actor = game.actors?.get(params.actorId);
         if (!actor) throw new Error(`Actor with ID ${params.actorId} not found.`);
@@ -336,6 +373,30 @@ export const ActorHandlers = {
         if (params.ac !== undefined) {
             updateData[`system.attributes.ac.flat`] = params.ac;
             updateData[`system.attributes.ac.calc`] = "flat";
+        }
+
+        if (params.movementWalk !== undefined) {
+            updateData["system.attributes.movement.walk"] = params.movementWalk;
+        }
+
+        if (params.size) {
+            updateData["system.traits.size"] = params.size;
+        }
+
+        if (params.damageVulnerabilities) {
+            updateData["system.traits.dv.value"] = params.damageVulnerabilities;
+        }
+
+        if (params.damageResistances) {
+            updateData["system.traits.dr.value"] = params.damageResistances;
+        }
+
+        if (params.damageImmunities) {
+            updateData["system.traits.di.value"] = params.damageImmunities;
+        }
+
+        if (params.conditionImmunities) {
+            updateData["system.traits.ci.value"] = params.conditionImmunities;
         }
 
         const updatedActor = await actor.update(updateData);
