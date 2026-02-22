@@ -32,6 +32,15 @@ Hooks.once('ready', () => {
     socket.registerHandler('actor.read', ActorHandlers.read);
     socket.registerHandler('actor.create', ActorHandlers.create);
     socket.registerHandler('actor.edit', ActorHandlers.edit);
+    socket.registerHandler('actor.clone', ActorHandlers.clone);
+    socket.registerHandler('actor.add_items', ActorHandlers.addItems);
+    socket.registerHandler('actor.create_5e_attack', ActorHandlers.create5eAttack);
+    socket.registerHandler('actor.create_5e_spell', ActorHandlers.create5eSpell);
+    socket.registerHandler('actor.update_stats', ActorHandlers.updateStats);
+    socket.registerHandler('actor.read_summary', ActorHandlers.readSummary);
+    socket.registerHandler('actor.create_5e_monster', ActorHandlers.create5eMonster);
+    socket.registerHandler('actor.create_5e_npc', ActorHandlers.create5eNpc);
+    socket.registerHandler('actor.create_5e_encounter', ActorHandlers.create5eEncounter);
 
     socket.registerHandler('compendium.read', CompendiumHandlers.read);
     socket.registerHandler('compendium.search', CompendiumHandlers.search);
@@ -53,6 +62,7 @@ Hooks.once('ready', () => {
     socket.registerHandler('item.read', ItemHandlers.read);
     socket.registerHandler('item.create', ItemHandlers.create);
     socket.registerHandler('item.edit', ItemHandlers.edit);
+    socket.registerHandler('item.create_5e_item', ItemHandlers.create5eItem);
 
     socket.registerHandler('folder.read', FolderHandlers.read);
     socket.registerHandler('folder.create', FolderHandlers.create);

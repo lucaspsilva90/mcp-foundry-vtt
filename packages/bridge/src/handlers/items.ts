@@ -56,5 +56,27 @@ export const ItemHandlers = {
         if (!updatedItem) throw new Error("Failed to update item.");
 
         return updatedItem.toObject();
+    },
+
+    create5eItem: async (params: { name: string; type: string; description: string; price?: number; weight?: number; rarity?: string; folder?: string }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can create items via Bridge.");
+
+        const itemData: any = {
+            name: params.name,
+            type: params.type,
+            system: {
+                description: { value: `<p>${params.description || ""}</p>` },
+                price: { value: params.price || 0, denomination: "gp" },
+                weight: { value: params.weight || 0 },
+                rarity: params.rarity || ""
+            }
+        };
+
+        if (params.folder) itemData.folder = params.folder;
+
+        const newItem = await Item.create(itemData);
+        if (!newItem) throw new Error("Failed to create 5e item.");
+
+        return newItem.toObject();
     }
 };
