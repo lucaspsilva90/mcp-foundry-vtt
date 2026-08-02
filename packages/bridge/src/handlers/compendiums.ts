@@ -154,6 +154,9 @@ export const CompendiumHandlers = {
 
         // @ts-ignore
         const doc = await documentClass.create(params.documentData, { pack: params.pack });
+        if (!doc) {
+            throw new Error(`Foundry cancelled creation of the document in compendium ${params.pack}. Check the document data and Foundry validation errors.`);
+        }
         return doc.toObject();
     },
 

@@ -2,7 +2,7 @@
     "id": "mcp-bridge",
     "title": "MCP Bridge",
     "description": "Exposes an API for the Foundry VTT MCP Server",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "library": false,
     "compatibility": {
         "minimum": 13,
