@@ -250,6 +250,21 @@ export function registerTools(server: McpServer) {
     });
 
     // ---- COMPENDIUMS ----
+    server.registerTool('create_compendium', {
+        description: 'Ensure a world Compendium exists. Returns the existing pack when the requested collection already exists.',
+        inputSchema: {
+            collection: z.string().regex(/^world\.[a-z0-9-]+$/).describe('Stable world collection ID, e.g. world.dnd5e-ptbr-magias'),
+            label: z.string().describe('Human-readable label shown in Foundry'),
+            type: z.enum(['Item', 'Actor', 'JournalEntry', 'RollTable', 'Scene']).describe('Foundry document type stored by the pack'),
+            description: z.string().optional().describe('Human documentation for the pack registry')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('compendium.createPack', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     server.registerTool('read_compendiums', {
         description: 'Read documents from a Compendium pack. Use pagination and minimal fields rather than dumping a full pack without them.',
         inputSchema: {
@@ -481,6 +496,7 @@ export function registerTools(server: McpServer) {
         inputSchema: {
             name: z.string().describe('Name of the folder to search for (partial match)'),
             type: z.string().optional().describe('Filter by document type (Actor, Item, Scene, JournalEntry)'),
+            pack: z.string().optional().describe('The name of the pack if searching inside a compendium'),
             limit: z.number().optional()
         }
     }, async (params) => {
@@ -496,6 +512,7 @@ export function registerTools(server: McpServer) {
             name: z.string().describe('The name of the folder'),
             type: z.string().describe('The type of document this folder contains (e.g., Actor, Item, Scene, JournalEntry)'),
             folder: z.string().optional().describe('The ID of the parent folder if nesting'),
+            pack: z.string().optional().describe('The name of the pack if creating inside a compendium'),
             color: z.string().optional().describe('Hex color string for the folder (e.g., #ff0000)')
         }
     }, async (params) => {

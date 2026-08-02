@@ -1,4 +1,33 @@
 export const CompendiumHandlers = {
+    createPack: async (params: { collection: string; label: string; type: string; description?: string }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can create compendiums via Bridge.");
+
+        const [packageName, name] = params.collection.split(".", 2);
+        if (packageName !== "world" || !name) {
+            throw new Error("Only world compendiums with collection format 'world.name' may be created.");
+        }
+
+        const existing = game.packs.get(params.collection);
+        if (existing) {
+            if (existing.metadata.type !== params.type) {
+                throw new Error(`Compendium ${params.collection} already exists with type ${existing.metadata.type}, expected ${params.type}.`);
+            }
+            return { ...existing.metadata, created: false };
+        }
+
+        // Foundry persists world packs itself; `name` is the stable technical
+        // identifier and `label` is the user-facing name. Description is kept
+        // in the translator registry because Compendium metadata has no stable
+        // cross-version description field.
+        const pack = await CompendiumCollection.createCompendium({
+            type: params.type,
+            label: params.label,
+            package: "world",
+            name
+        });
+        return { ...pack.metadata, created: true };
+    },
+
     read: async (params: { pack: string; id?: string; name?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);

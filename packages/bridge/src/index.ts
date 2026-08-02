@@ -44,6 +44,7 @@ Hooks.once('ready', () => {
     socket.registerHandler('actor.create_5e_npc', ActorHandlers.create5eNpc);
     socket.registerHandler('actor.create_5e_encounter', ActorHandlers.create5eEncounter);
 
+    socket.registerHandler('compendium.createPack', CompendiumHandlers.createPack);
     socket.registerHandler('compendium.read', CompendiumHandlers.read);
     socket.registerHandler('compendium.search', CompendiumHandlers.search);
     socket.registerHandler('compendium.create', CompendiumHandlers.create);
