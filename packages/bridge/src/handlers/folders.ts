@@ -73,5 +73,34 @@ export const FolderHandlers = {
         if (!updatedFolder) throw new Error("Failed to update folder.");
 
         return updatedFolder.toObject();
+    },
+
+    deleteEmptyInPack: async (params: { pack: string }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can delete compendium folders via Bridge.");
+        const pack = game.packs.get(params.pack);
+        if (!pack) throw new Error(`Pack ${params.pack} not found.`);
+
+        const deleted: string[] = [];
+        // Delete leaves first. A folder is deleted only when it has neither
+        // documents nor child folders; repeat so newly-empty parents follow.
+        while (true) {
+            const folders = Array.from((pack as any).folders?.contents || []);
+            const index = Array.from(await pack.getIndex({ fields: ["folder"] }) as any[]);
+            const occupied = new Set(index.map((entry: any) => entry.folder).filter(Boolean));
+            const candidate = folders.find((folder: any) => {
+                const folderId = folder.id;
+                const hasDocuments = occupied.has(folderId);
+                const hasChildren = folders.some((other: any) => {
+                    const parent = typeof other.folder === "string" ? other.folder : other.folder?.id;
+                    return parent === folderId;
+                });
+                return !hasDocuments && !hasChildren;
+            }) as any;
+            if (!candidate) break;
+            const name = candidate.name;
+            await candidate.delete();
+            deleted.push(name);
+        }
+        return { pack: params.pack, deletedCount: deleted.length, deleted };
     }
 };

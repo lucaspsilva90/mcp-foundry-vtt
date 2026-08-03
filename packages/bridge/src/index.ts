@@ -70,6 +70,7 @@ Hooks.once('ready', () => {
     socket.registerHandler('folder.read', FolderHandlers.read);
     socket.registerHandler('folder.create', FolderHandlers.create);
     socket.registerHandler('folder.edit', FolderHandlers.edit);
+    socket.registerHandler('folder.deleteEmptyInPack', FolderHandlers.deleteEmptyInPack);
 
     socket.registerHandler('table.read', TableHandlers.read);
     socket.registerHandler('table.create', TableHandlers.create);

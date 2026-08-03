@@ -522,6 +522,18 @@ export function registerTools(server: McpServer) {
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
 
+    server.registerTool('delete_empty_compendium_folders', {
+        description: 'Delete only empty leaf folders from a specific Compendium pack. Folders containing documents or child folders are preserved.',
+        inputSchema: {
+            pack: z.string().describe('The exact compendium pack to clean')
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('folder.deleteEmptyInPack', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     server.registerTool('edit_folder', {
         description: 'Edit an existing Folder in Foundry VTT',
         inputSchema: {
