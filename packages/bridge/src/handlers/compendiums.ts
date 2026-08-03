@@ -170,6 +170,8 @@ export const CompendiumHandlers = {
         if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
 
         const updatedDoc = await doc.update(params.updateData);
-        return updatedDoc.toObject();
+        // Foundry may return undefined for a valid no-op update. The caller
+        // still needs the persisted document to verify its folder placement.
+        return (updatedDoc || doc).toObject();
     }
 };

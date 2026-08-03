@@ -86,9 +86,8 @@ export const FolderHandlers = {
         if (!folder) throw new Error(`Folder with ID ${params.id} not found.`);
 
         const updatedFolder = await folder.update(params.updateData);
-        if (!updatedFolder) throw new Error("Failed to update folder.");
-
-        return updatedFolder.toObject();
+        // As with Documents, a no-op update is valid and can return undefined.
+        return (updatedFolder || folder).toObject();
     },
 
     deleteEmptyInPack: async (params: { pack: string }) => {
