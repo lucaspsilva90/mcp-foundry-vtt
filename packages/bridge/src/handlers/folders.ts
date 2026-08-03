@@ -48,6 +48,17 @@ export const FolderHandlers = {
         // Requires GM privileges typically
         if (!game.user?.isGM) throw new Error("Only GM can create folders via Bridge.");
 
+        const pack = params.pack ? game.packs.get(params.pack) : undefined;
+        if (params.pack && !pack) throw new Error(`Pack ${params.pack} not found.`);
+        if (pack && pack.metadata.type !== params.type) {
+            throw new Error(`Folder type ${params.type} does not match compendium ${params.pack} type ${pack.metadata.type}.`);
+        }
+        if (params.folder) {
+            const parent = pack ? pack.folders?.get(params.folder) : game.folders?.get(params.folder);
+            if (!parent) throw new Error(`Parent folder ${params.folder} was not found ${params.pack ? `in compendium ${params.pack}` : "in the world"}.`);
+            if (parent.type !== params.type) throw new Error(`Parent folder ${params.folder} has type ${parent.type}, expected ${params.type}.`);
+        }
+
         const folderData: any = {
             name: params.name,
             type: params.type
@@ -59,14 +70,19 @@ export const FolderHandlers = {
         const options = params.pack ? { pack: params.pack } : {};
         const newFolder = await Folder.create(folderData, options);
         if (!newFolder) throw new Error("Failed to create folder.");
+        if (params.pack && (newFolder.pack || null) !== params.pack) {
+            throw new Error(`Folder ${newFolder.id} was created outside compendium ${params.pack}.`);
+        }
 
         return newFolder.toObject();
     },
 
-    edit: async (params: { id: string; updateData: any }) => {
+    edit: async (params: { id: string; updateData: any; pack?: string }) => {
         if (!game.user?.isGM) throw new Error("Only GM can edit folders via Bridge.");
 
-        const folder = game.folders?.get(params.id);
+        const pack = params.pack ? game.packs.get(params.pack) : undefined;
+        if (params.pack && !pack) throw new Error(`Pack ${params.pack} not found.`);
+        const folder = pack ? pack.folders?.get(params.id) : game.folders?.get(params.id);
         if (!folder) throw new Error(`Folder with ID ${params.id} not found.`);
 
         const updatedFolder = await folder.update(params.updateData);

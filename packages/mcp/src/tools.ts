@@ -538,7 +538,8 @@ export function registerTools(server: McpServer) {
         description: 'Edit an existing Folder in Foundry VTT',
         inputSchema: {
             id: z.string().describe('The ID of the folder to edit'),
-            updateData: z.any().describe('Data changes to apply (e.g., { "name": "New Name", "color": "#00ff00" })')
+            updateData: z.any().describe('Data changes to apply (e.g., { "name": "New Name", "color": "#00ff00" })'),
+            pack: z.string().optional().describe('The compendium containing the folder, if it is not a world folder')
         }
     }, async (params) => {
         try {
