@@ -271,6 +271,7 @@ export function registerTools(server: McpServer) {
             pack: z.string().describe('The exact name of the pack (e.g., dnd5e.monsters)'),
             name: z.string().optional().describe('Filter the compendium index by name (partial match). Always use this first before querying by ID.'),
             id: z.string().optional().describe('The ID of a specific document inside the compendium'),
+            spellLevel: z.number().int().min(0).max(9).optional().describe('Filter Item spells by system.level before pagination.'),
             fields: z.enum(["minimal", "full"]).optional().describe('If "minimal" (default), returns only _id, name, and type. "full" returns all metadata.'),
             limit: z.number().optional().describe('Maximum number of items to return (default: all)'),
             offset: z.number().optional().describe('Number of items to skip for pagination (default: 0)')

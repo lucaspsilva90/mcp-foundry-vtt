@@ -28,7 +28,7 @@ export const CompendiumHandlers = {
         return { ...pack.metadata, created: true };
     },
 
-    read: async (params: { pack: string; id?: string; name?: string; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
+    read: async (params: { pack: string; id?: string; name?: string; spellLevel?: number; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
 
@@ -39,10 +39,18 @@ export const CompendiumHandlers = {
         }
 
         const isMinimal = params.fields !== "full";
-        let index = await pack.getIndex(isMinimal ? { fields: ["name", "type"] } : undefined);
+        // Include level in the compact index so callers can page a spell circle
+        // without loading every spell document into memory.
+        let index = await pack.getIndex(isMinimal ? { fields: ["name", "type", "system.level"] } : undefined);
 
         if (params.name) {
             index = index.filter((entry: any) => entry.name?.toLowerCase().includes(params.name!.toLowerCase()));
+        }
+        if (params.spellLevel !== undefined) {
+            index = index.filter((entry: any) => {
+                const level = entry.system?.level ?? entry["system.level"];
+                return Number(level) === params.spellLevel;
+            });
         }
 
         // Apply pagination
