@@ -241,5 +241,15 @@ export const CompendiumHandlers = {
         if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
         if (!Array.isArray(params.updates) || !params.updates.length) return [];
         return (await doc.updateEmbeddedDocuments(params.embeddedName, params.updates)).map((embedded: any) => embedded.toObject());
+    },
+
+    deleteEmbedded: async (params: { pack: string; id: string; embeddedName: string; ids: string[] }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can modify compendiums via Bridge.");
+        const pack = game.packs.get(params.pack);
+        if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
+        const doc = await pack.getDocument(params.id);
+        if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
+        if (!Array.isArray(params.ids) || !params.ids.length) return [];
+        return doc.deleteEmbeddedDocuments(params.embeddedName, params.ids);
     }
 };

@@ -357,6 +357,21 @@ export function registerTools(server: McpServer) {
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
 
+    server.registerTool('delete_compendium_embedded_documents', {
+        description: 'Delete embedded Item or ActiveEffect documents from an Actor stored in a Compendium. Use only known IDs from a translator-owned incomplete Actor recovery.',
+        inputSchema: {
+            pack: z.string(),
+            id: z.string().describe('The Compendium Actor ID'),
+            embeddedName: z.enum(['Item', 'ActiveEffect']),
+            ids: z.array(z.string()).min(1).max(25)
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('compendium.deleteEmbedded', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     // ---- ENCOUNTERS / COMBATS ----
     server.registerTool('create_5e_encounter_actor', {
         description: 'Create an Actor of type "encounter" (or "group") in the D&D 5e system to group monsters and players together.',

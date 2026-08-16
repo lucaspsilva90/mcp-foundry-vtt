@@ -26,14 +26,14 @@ export class FoundryClient {
 
     public stopServer() {
         if (this.wss) {
-            console.log('MCP Foundry Server | Shutting down WebSocket server...');
+            console.error('MCP Foundry Server | Shutting down WebSocket server...');
             for (const client of this.wss.clients) {
                 client.terminate();
             }
             this.wss.close();
             this.wss = null;
             this.activeSocket = null;
-            console.log('MCP Foundry Server | WebSocket server closed.');
+            console.error('MCP Foundry Server | WebSocket server closed.');
         }
     }
 

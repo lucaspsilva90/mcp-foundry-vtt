@@ -10,7 +10,7 @@ async function main() {
 
     const server = new McpServer({
         name: "foundry-vtt-mcp",
-        version: "1.0.0",
+        version: "1.6.0",
     });
 
     registerTools(server);
