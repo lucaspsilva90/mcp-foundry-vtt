@@ -28,7 +28,17 @@ export const CompendiumHandlers = {
         return { ...pack.metadata, created: true };
     },
 
-    read: async (params: { pack: string; id?: string; name?: string; spellLevel?: number; fields?: "minimal" | "full"; limit?: number; offset?: number }) => {
+    read: async (params: {
+        pack: string;
+        id?: string;
+        name?: string;
+        namePrefix?: string;
+        spellLevel?: number;
+        creatureType?: string;
+        fields?: "minimal" | "full";
+        limit?: number;
+        offset?: number;
+    }) => {
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
 
@@ -36,6 +46,10 @@ export const CompendiumHandlers = {
             const doc = await pack.getDocument(params.id);
             if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
             return doc.toObject();
+        }
+
+        if (params.creatureType && pack.metadata.type !== "Actor") {
+            throw new Error("creatureType can only be used with Actor compendium packs.");
         }
 
         const isMinimal = params.fields !== "full";
@@ -46,6 +60,10 @@ export const CompendiumHandlers = {
         if (params.name) {
             index = index.filter((entry: any) => entry.name?.toLowerCase().includes(params.name!.toLowerCase()));
         }
+        if (params.namePrefix) {
+            const prefix = params.namePrefix.toLocaleLowerCase();
+            index = index.filter((entry: any) => entry.name?.toLocaleLowerCase().startsWith(prefix));
+        }
         if (params.spellLevel !== undefined) {
             index = index.filter((entry: any) => {
                 const level = entry.system?.level ?? entry["system.level"];
@@ -53,8 +71,28 @@ export const CompendiumHandlers = {
             });
         }
 
-        // Apply pagination
-        let results = Array.from(index);
+        // `system.details.type` is not an index field. Load the Actors before
+        // pagination so a type-filtered batch cannot silently omit documents.
+        let results: any[];
+        if (params.creatureType || !isMinimal) {
+            const matchingIds = new Set(Array.from(index).map((entry: any) => entry._id));
+            const documents = await pack.getDocuments();
+            results = documents
+                .filter((doc: any) => matchingIds.has(doc.id))
+                .filter((doc: any) => {
+                    if (!params.creatureType) return true;
+                    const rawType = doc.system?.details?.type;
+                    const type = typeof rawType === "string" ? rawType : rawType?.value;
+                    return typeof type === "string" && type.toLocaleLowerCase() === params.creatureType!.toLocaleLowerCase();
+                })
+                .map((doc: any) => isMinimal
+                    ? { _id: doc.id, name: doc.name, type: doc.type, documentName: doc.documentName }
+                    : doc.toObject());
+        } else {
+            results = Array.from(index);
+        }
+
+        // Apply pagination only after every deterministic filter has run.
         const offset = params.offset || 0;
         const limit = params.limit || results.length;
         return results.slice(offset, offset + limit);
@@ -157,11 +195,13 @@ export const CompendiumHandlers = {
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
 
-        const documentClass = (CONFIG as any)[pack.metadata.type as string]?.documentClass;
+        const documentClass = pack.documentClass || (CONFIG as any)[pack.metadata.type as string]?.documentClass;
         if (!documentClass) throw new Error(`Document class ${pack.metadata.type} not found.`);
 
-        // @ts-ignore
-        const doc = await documentClass.create(params.documentData, { pack: params.pack });
+        // v13 documents creation inside a Compendium uses the document class
+        // and the pack creation context. This preserves Actor embedded Items
+        // and ActiveEffects supplied in documentData.
+        const [doc] = await documentClass.createDocuments([params.documentData], { pack: pack.collection });
         if (!doc) {
             throw new Error(`Foundry cancelled creation of the document in compendium ${params.pack}. Check the document data and Foundry validation errors.`);
         }
