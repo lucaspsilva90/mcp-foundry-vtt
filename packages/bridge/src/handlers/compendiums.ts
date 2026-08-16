@@ -221,5 +221,25 @@ export const CompendiumHandlers = {
         // Foundry may return undefined for a valid no-op update. The caller
         // still needs the persisted document to verify its folder placement.
         return (updatedDoc || doc).toObject();
+    },
+
+    createEmbedded: async (params: { pack: string; id: string; embeddedName: string; documents: any[] }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can modify compendiums via Bridge.");
+        const pack = game.packs.get(params.pack);
+        if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
+        const doc = await pack.getDocument(params.id);
+        if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
+        if (!Array.isArray(params.documents) || !params.documents.length) return [];
+        return (await doc.createEmbeddedDocuments(params.embeddedName, params.documents)).map((embedded: any) => embedded.toObject());
+    },
+
+    updateEmbedded: async (params: { pack: string; id: string; embeddedName: string; updates: any[] }) => {
+        if (!game.user?.isGM) throw new Error("Only GM can modify compendiums via Bridge.");
+        const pack = game.packs.get(params.pack);
+        if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
+        const doc = await pack.getDocument(params.id);
+        if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
+        if (!Array.isArray(params.updates) || !params.updates.length) return [];
+        return (await doc.updateEmbeddedDocuments(params.embeddedName, params.updates)).map((embedded: any) => embedded.toObject());
     }
 };

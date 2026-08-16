@@ -327,6 +327,36 @@ export function registerTools(server: McpServer) {
         } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
     });
 
+    server.registerTool('create_compendium_embedded_documents', {
+        description: 'Create embedded Item or ActiveEffect documents inside an Actor stored in a Compendium. Use bounded batches when assembling a large translated monster.',
+        inputSchema: {
+            pack: z.string(),
+            id: z.string().describe('The Compendium Actor ID'),
+            embeddedName: z.enum(['Item', 'ActiveEffect']),
+            documents: z.array(z.any()).min(1).max(25)
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('compendium.createEmbedded', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
+    server.registerTool('update_compendium_embedded_documents', {
+        description: 'Apply differential updates to embedded Item or ActiveEffect documents inside a Compendium Actor. Every update must include _id.',
+        inputSchema: {
+            pack: z.string(),
+            id: z.string().describe('The Compendium Actor ID'),
+            embeddedName: z.enum(['Item', 'ActiveEffect']),
+            updates: z.array(z.any()).min(1).max(25)
+        }
+    }, async (params) => {
+        try {
+            const result = await foundryClient.sendRequest<any>('compendium.updateEmbedded', params);
+            return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        } catch (e: any) { return { content: [{ type: 'text', text: e.message }], isError: true }; }
+    });
+
     // ---- ENCOUNTERS / COMBATS ----
     server.registerTool('create_5e_encounter_actor', {
         description: 'Create an Actor of type "encounter" (or "group") in the D&D 5e system to group monsters and players together.',
