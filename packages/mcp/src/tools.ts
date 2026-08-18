@@ -333,7 +333,8 @@ export function registerTools(server: McpServer) {
             pack: z.string(),
             id: z.string().describe('The Compendium Actor ID'),
             embeddedName: z.enum(['Item', 'ActiveEffect']),
-            documents: z.array(z.any()).min(1).max(25)
+            documents: z.array(z.any()).min(1).max(25),
+            keepId: z.boolean().optional().describe('Preserve supplied embedded document IDs. Required when an Actor uses relative [[/item .id]] references.')
         }
     }, async (params) => {
         try {

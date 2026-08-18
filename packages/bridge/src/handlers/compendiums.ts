@@ -223,14 +223,19 @@ export const CompendiumHandlers = {
         return (updatedDoc || doc).toObject();
     },
 
-    createEmbedded: async (params: { pack: string; id: string; embeddedName: string; documents: any[] }) => {
+    createEmbedded: async (params: { pack: string; id: string; embeddedName: string; documents: any[]; keepId?: boolean }) => {
         if (!game.user?.isGM) throw new Error("Only GM can modify compendiums via Bridge.");
         const pack = game.packs.get(params.pack);
         if (!pack) throw new Error(`Compendium pack ${params.pack} not found.`);
         const doc = await pack.getDocument(params.id);
         if (!doc) throw new Error(`Document ${params.id} not found in pack ${params.pack}.`);
         if (!Array.isArray(params.documents) || !params.documents.length) return [];
-        return (await doc.createEmbeddedDocuments(params.embeddedName, params.documents)).map((embedded: any) => embedded.toObject());
+        // Relative dnd5e references such as [[/item .abc123]] address an
+        // embedded Item by its Actor-local ID. The translator preserves those
+        // references, therefore their source IDs must be retained on creation.
+        return (await doc.createEmbeddedDocuments(params.embeddedName, params.documents, {
+            keepId: params.keepId === true
+        })).map((embedded: any) => embedded.toObject());
     },
 
     updateEmbedded: async (params: { pack: string; id: string; embeddedName: string; updates: any[] }) => {
